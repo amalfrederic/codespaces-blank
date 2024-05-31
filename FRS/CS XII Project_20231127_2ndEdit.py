@@ -1,0 +1,481 @@
+import mysql.connector as sql
+con=sql.connect(host="localhost",user="root",password="password")
+cur=con.cursor()
+cur.execute("Create database if not exists FRS;")
+
+if con.is_connected()==False:
+    print("Error in connecting the MySQL Dtabase")
+
+    
+def bookticket():
+    print("Please fill the following Details")
+    cur.execute("Drop table if exists flightdetails;")
+    cur.execute("create table if not exists flightdetails(FlightNo int Primary Key,Origin varchar(20),Destination varchar(20),DateOfJourney date,PricePerTicketInRupees int);")
+    cur.execute("insert into flightdetails values(101,'Chennai','Banglore',now(),2000);")
+    cur.execute("insert into flightdetails values(102,'Chennai','Delhi',now(),2000);")
+    cur.execute("insert into flightdetails values(103,'Delhi','Dubai',now(),8000);")
+    cur.execute("insert into flightdetails values(104,'Dubai','Mumbai',now(),7000);")         
+    cur.execute("insert into flightdetails values(105,'Dubai','Chennai',now(),8000);")
+    cur.execute("insert into flightdetails values(106,'Singapore','Chennai',now(),6000);")
+    cur.execute("insert into flightdetails values(107,'Tokyo','Hyderabad',now(),10000);")
+    cur.execute("insert into flightdetails values(108,'Paris','Chennai',now(),15000);")
+    cur.execute("insert into flightdetails values(109,'Mumbai','Chennai',now(),2000);")
+    cur.execute("insert into flightdetails values(110,'New York','Chennai',now(),20000);")
+    con.commit()
+    a=input("Enter your Name:")
+    b=input("Enter your ContactNo:")
+    c=input("Enter your EmailId:")
+    print("Select your Flight No. From below table to proceed")
+    cur.execute("Select * from flightdetails;")
+    e=cur.fetchall()
+    print("%10s"%"FlightNo","%20s"%"Origin","%20s"%"Destination","%20s"%"DateOfJourney","%20s"%"PricePerRupees")
+    for f in e:
+        print("%10s"%f[0],"%20s"%f[1],"%20s"%f[2],"%20s"%f[3],"%20s"%f[4])
+    global d
+    d=int(input("Enter your Choice of Flight No:"))
+    
+    cur.execute("create table if not exists Customer(CustomerID int primary key,sno int,Name varchar(100),PhoneNo varchar(10),EmailID varchar(100),FlightNo int references flightdetails(FlightNo));")
+    cur.execute("SELECT * from customer;")
+    row=len(cur.fetchall())
+    cur.execute("Insert into customer values(round((rand()*10000),0),{},'{}','{}','{}',{})".format(int(row),a,b,c,d))
+    con.commit()
+    print("Your ticket Has been sucessfully Booked!")
+    cur.execute("SELECT CustomerID from customer order by sno;")
+    g=cur.fetchall()
+    i=[]
+    for h in g:
+        i.append(h[0])
+    print("Please Note your CustomerID and FlightNo for future Services based on this ticket")    
+    print("Your Customer Id is:",i[-1])
+    print("The Slected Flight No:",d)
+    
+def cancelticket():  
+    j=int(input("Enter your Customer Id:"))
+    cur.execute("select * from customer where customerid={}".format(j))
+    k=cur.fetchall()
+    print("%10s"%"CustomerID","%20s"%"Name","%20s"%"PhoneNo","%20s"%"EmailID","%20s"%"FlightNo")
+    
+    for m in k:
+        print("%10s"%m[0],"%20s"%m[2],"%20s"%m[3],"%20s"%m[4],"%20s"%m[5])
+    n=input("Are you sure to Cancel your ticket(y/n)")
+    if n.lower()=="y":
+        cur.execute("delete from customer where customerid={}".format(j)) 
+        con.commit() 
+        print("The ticket with Customer id ",j,"Is Cancelled Sucessfully")
+   
+def viewticket():
+    o=int(input("Enter your Customer Id:"))
+    flight=int(input("Enter your Flight No:"))
+    print("Your Ticket is displayed Below")
+    print("%100s"%"ARS Airlines")
+    print()
+    print()
+    try:
+        cur.execute("select c.customerid,c.Name,c.phoneno,c.emailid,f.flightno,f.origin,f.destination,f.DateOfJourney,f.PricePerTicketInRupees,s.seatno from customer c,flightdetails f,seat{} s where c.customerid={} and c.flightno=f.flightno and s.custid=c.customerid".format(flight,o))
+        p=cur.fetchall()
+        print("%10s"%"CustomerId","%20s"%"Name","%20s"%"PhoneNo","%20s"%"EmailID","%20s"%"Flightno","%20s"%"Origin","%20s"%"Destination","%20s"%"DateOfJourney","%20s"%"Total Cost Spent","%20s"%"SeatNo")
+        for q in p:
+            print("%10s"%q[0],"%20s"%q[1],"%20s"%q[2],"%20s"%q[3],"%20s"%q[4],"%20s"%q[5],"%20s"%q[6],"%20s"%q[7],"%20s"%q[8],"%20s"%q[9])
+    except sql.Error as err:
+        print("Wrong Entry Of Customer ID or FlightNo.")
+        
+def selectseat(x,y):
+    fno=y
+    fin=["1A", "1F", "2A", "2F", "3A", "3B", "3E", "3F","4A", "4B", "4E", "4F", "5A", "5B", "5E", "5F",
+              "6A", "6B", "6C", "6D", "6E", "6F"]
+   
+    if fno==101:
+        s = ["1A", "1F", "2A", "2F", "3A", "3B", "3E", "3F"]
+        t=[ "4A", "4B", "4E", "4F", "5A", "5B", "5E", "5F",
+                  "6A", "6B", "6C", "6D", "6E", "6F"] 
+        
+        for r in s:
+            print("%1s"%r,end=" ")
+        print()
+        for u in t:
+            print("%1s"%u,end=" ")
+        w=[]
+        print()
+        
+       
+        v=input("Enter your Choice of Seat:")
+        if v not in fin: 
+            print("Error:Wrong Input of Seat No!")
+        
+        if v in w:
+            print("Sorry Seat Already Reserved")
+        else:
+            try: 
+                cur.execute("create table if not exists seat101(Custid int unique,Seatno varchar(5) unique,FOREIGN KEY (Custid) REFERENCES customer(customerID) ON DELETE CASCADE ON UPDATE CASCADE);")
+                cur.execute("insert into seat101 values({},'{}')".format(x,v))
+                con.commit()
+                w.append(v)
+                print("You have reserved Your Seat sucessfully!")
+                print("SeatNo:",v)
+            except sql.Error as err:
+                print("Duplicate/wrong Entry Of Customer ID or Seat")
+    elif fno==102:
+        s = ["1A", "1F", "2A", "2F", "3A", "3B", "3E", "3F"]
+        t=[ "4A", "4B", "4E", "4F", "5A", "5B", "5E", "5F",
+                  "6A", "6B", "6C", "6D", "6E", "6F"] 
+        
+        for r in s:
+            print("%1s"%r,end=" ")
+        print()
+        for u in t:
+            print("%1s"%u,end=" ")
+        w=[]
+        print()
+        
+        
+        v=input("Enter your Choice of Seat:")
+        if v not in fin: 
+            print("Error:Wrong Input of Seat No!")
+        
+        if v in w:
+            print("Sorry Seat Already Reserved")
+        else:
+            try: 
+                cur.execute("create table if not exists seat102(Custid int unique,Seatno varchar(5) unique,FOREIGN KEY (Custid) REFERENCES customer(customerID) ON DELETE CASCADE ON UPDATE CASCADE);")
+                cur.execute("insert into seat102 values({},'{}')".format(x,v))
+                con.commit()
+                w.append(v)
+                print("You have reserved Your Seat sucessfully!")
+                print("SeatNo:",v)
+            except sql.Error as err:
+                print("Duplicate/wrong Entry Of Customer ID or Seat")
+    elif fno==103:
+        s = ["1A", "1F", "2A", "2F", "3A", "3B", "3E", "3F"]
+        t=[ "4A", "4B", "4E", "4F", "5A", "5B", "5E", "5F",
+                  "6A", "6B", "6C", "6D", "6E", "6F"] 
+        
+        for r in s:
+            print("%1s"%r,end=" ")
+        print()
+        for u in t:
+            print("%1s"%u,end=" ")
+        w=[]
+        print()
+        
+       
+        v=input("Enter your Choice of Seat:")
+        if v not in fin: 
+            print("Error:Wrong Input of Seat No!")
+        
+        if v in w:
+            print("Sorry Seat Already Reserved")
+        else:
+            try: 
+                cur.execute("create table if not exists seat103(Custid int unique,Seatno varchar(5) unique,FOREIGN KEY (Custid) REFERENCES customer(customerID) ON DELETE CASCADE ON UPDATE CASCADE);")
+                cur.execute("insert into seat103 values({},'{}')".format(x,v))
+                con.commit()
+                w.append(v)
+                print("You have reserved Your Seat sucessfully!")
+                print("SeatNo:",v)
+            except sql.Error as err:
+                print("Duplicate/wrong Entry Of Customer ID or Seat")
+    elif fno==104:
+        s = ["1A", "1F", "2A", "2F", "3A", "3B", "3E", "3F"]
+        t=[ "4A", "4B", "4E", "4F", "5A", "5B", "5E", "5F",
+                  "6A", "6B", "6C", "6D", "6E", "6F"] 
+        
+        for r in s:
+            print("%1s"%r,end=" ")
+        print()
+        for u in t:
+            print("%1s"%u,end=" ")
+        w=[]
+        print()
+        
+       
+        v=input("Enter your Choice of Seat:")
+        if v not in fin: 
+            print("Error:Wrong Input of Seat No!")
+        
+        if v in w:
+            print("Sorry Seat Already Reserved")
+        else:
+            try: 
+                cur.execute("create table if not exists seat104(Custid int unique,Seatno varchar(5) unique,FOREIGN KEY (Custid) REFERENCES customer(customerID) ON DELETE CASCADE ON UPDATE CASCADE);")
+                cur.execute("insert into seat104 values({},'{}')".format(x,v))
+                con.commit()
+                w.append(v)
+                print("You have reserved Your Seat sucessfully!")
+                print("SeatNo:",v)
+            except sql.Error as err:
+                print("Duplicate/wrong Entry Of Customer ID or Seat")
+    elif fno==105:
+        s = ["1A", "1F", "2A", "2F", "3A", "3B", "3E", "3F"]
+        t=[ "4A", "4B", "4E", "4F", "5A", "5B", "5E", "5F",
+                  "6A", "6B", "6C", "6D", "6E", "6F"] 
+        
+        for r in s:
+            print("%1s"%r,end=" ")
+        print()
+        for u in t:
+            print("%1s"%u,end=" ")
+        w=[]
+        print()
+        
+        
+        v=input("Enter your Choice of Seat:")
+        if v not in fin: 
+            print("Error:Wrong Input of Seat No!")
+        
+        if v in w:
+            print("Sorry Seat Already Reserved")
+        else:
+            try: 
+                cur.execute("create table if not exists seat105(Custid int unique,Seatno varchar(5) unique,FOREIGN KEY (Custid) REFERENCES customer(customerID) ON DELETE CASCADE ON UPDATE CASCADE);")
+                cur.execute("insert into seat105 values({},'{}')".format(x,v))
+                con.commit()
+                w.append(v)
+                print("You have reserved Your Seat sucessfully!")
+                print("SeatNo:",v)
+            except sql.Error as err:
+                print("Duplicate/wrong Entry Of Customer ID or Seat")
+    elif fno==106:
+        s = ["1A", "1F", "2A", "2F", "3A", "3B", "3E", "3F"]
+        t=[ "4A", "4B", "4E", "4F", "5A", "5B", "5E", "5F",
+                  "6A", "6B", "6C", "6D", "6E", "6F"] 
+        
+        for r in s:
+            print("%1s"%r,end=" ")
+        print()
+        for u in t:
+            print("%1s"%u,end=" ")
+        w=[]
+        print()
+        
+        
+        v=input("Enter your Choice of Seat:")
+        if v not in fin: 
+            print("Error:Wrong Input of Seat No!")
+        
+        if v in w:
+            print("Sorry Seat Already Reserved")
+        else:
+            try: 
+                cur.execute("create table if not exists seat106(Custid int unique,Seatno varchar(5) unique,FOREIGN KEY (Custid) REFERENCES customer(customerID) ON DELETE CASCADE ON UPDATE CASCADE);")
+                cur.execute("insert into seat106 values({},'{}')".format(x,v))
+                con.commit()
+                w.append(v)
+                print("You have reserved Your Seat sucessfully!")
+                print("SeatNo:",v)
+            except sql.Error as err:
+                print("Duplicate/wrong Entry Of Customer ID or Seat")
+    elif fno==107:
+        s = ["1A", "1F", "2A", "2F", "3A", "3B", "3E", "3F"]
+        t=[ "4A", "4B", "4E", "4F", "5A", "5B", "5E", "5F",
+                  "6A", "6B", "6C", "6D", "6E", "6F"] 
+        
+        for r in s:
+            print("%1s"%r,end=" ")
+        print()
+        for u in t:
+            print("%1s"%u,end=" ")
+        w=[]
+        print()
+        
+       
+        v=input("Enter your Choice of Seat:")
+        if v not in fin: 
+            print("Error:Wrong Input of Seat No!")
+        
+        if v in w:
+            print("Sorry Seat Already Reserved")
+        else:
+            try: 
+                cur.execute("create table if not exists seat107(Custid int unique,Seatno varchar(5) unique,FOREIGN KEY (Custid) REFERENCES customer(customerID) ON DELETE CASCADE ON UPDATE CASCADE);")
+                cur.execute("insert into seat107 values({},'{}')".format(x,v))
+                con.commit()
+                w.append(v)
+                print("You have reserved Your Seat sucessfully!")
+                print("SeatNo:",v)
+            except sql.Error as err:
+                print("Duplicate/wrong Entry Of Customer ID or Seat")
+    elif fno==108:
+        s = ["1A", "1F", "2A", "2F", "3A", "3B", "3E", "3F"]
+        t=[ "4A", "4B", "4E", "4F", "5A", "5B", "5E", "5F",
+                  "6A", "6B", "6C", "6D", "6E", "6F"] 
+        
+        for r in s:
+            print("%1s"%r,end=" ")
+        print()
+        for u in t:
+            print("%1s"%u,end=" ")
+        w=[]
+        print()
+        
+       
+        v=input("Enter your Choice of Seat:")
+        if v not in fin: 
+            print("Error:Wrong Input of Seat No!")
+        
+        if v in w:
+            print("Sorry Seat Already Reserved")
+        else:
+            try: 
+                cur.execute("create table if not exists seat108(Custid int unique,Seatno varchar(5) unique,FOREIGN KEY (Custid) REFERENCES customer(customerID) ON DELETE CASCADE ON UPDATE CASCADE);")
+                cur.execute("insert into seat108 values({},'{}')".format(x,v))
+                con.commit()
+                w.append(v)
+                print("You have reserved Your Seat sucessfully!")
+                print("SeatNo:",v)
+            except sql.Error as err:
+                print("Duplicate/wrong Entry Of Customer ID or Seat")
+    elif fno==109:
+        s = ["1A", "1F", "2A", "2F", "3A", "3B", "3E", "3F"]
+        t=[ "4A", "4B", "4E", "4F", "5A", "5B", "5E", "5F",
+                  "6A", "6B", "6C", "6D", "6E", "6F"] 
+        
+        for r in s:
+            print("%1s"%r,end=" ")
+        print()
+        for u in t:
+            print("%1s"%u,end=" ")
+        w=[]
+        print()
+        
+       
+        v=input("Enter your Choice of Seat:")
+        if v not in fin: 
+            print("Error:Wrong Input of Seat No!")
+        
+        if v in w:
+            print("Sorry Seat Already Reserved")
+        else:
+            try: 
+                cur.execute("create table if not exists seat109(Custid int unique,Seatno varchar(5) unique,FOREIGN KEY (Custid) REFERENCES customer(customerID) ON DELETE CASCADE ON UPDATE CASCADE);")
+                cur.execute("insert into seat109 values({},'{}')".format(x,v))
+                con.commit()
+                w.append(v)
+                print("You have reserved Your Seat sucessfully!")
+                print("SeatNo:",v)
+            except sql.Error as err:
+                print("Duplicate/wrong Entry Of Customer ID or Seat")
+    elif fno==110:
+        s = ["1A", "1F", "2A", "2F", "3A", "3B", "3E", "3F"]
+        t=[ "4A", "4B", "4E", "4F", "5A", "5B", "5E", "5F",
+                  "6A", "6B", "6C", "6D", "6E", "6F"] 
+        
+        for r in s:
+            print("%1s"%r,end=" ")
+        print()
+        for u in t:
+            print("%1s"%u,end=" ")
+        w=[]
+        print()
+        
+        
+        v=input("Enter your Choice of Seat:")
+        if v not in fin: 
+            print("Error:Wrong Input of Seat No!")
+        
+        if v in w:
+            print("Sorry Seat Already Reserved")
+        else:
+            try: 
+                cur.execute("create table if not exists seat110(Custid int unique,Seatno varchar(5) unique,FOREIGN KEY (Custid) REFERENCES customer(customerID) ON DELETE CASCADE ON UPDATE CASCADE);")
+                cur.execute("insert into seat110 values({},'{}')".format(x,v))
+                con.commit()
+                w.append(v)
+                print("You have reserved Your Seat sucessfully!")
+                print("SeatNo:",v)
+            except sql.Error as err:
+                print("Duplicate/wrong Entry Of Customer ID or Seat")
+ 
+print("%120s"%"Welcome to ASA Flight Reservation System(FRS)")
+print("Please Select from the below services to procced futher")
+print("1.Customer portal")
+print("2.Employee portal")
+Ch=int(input("Enter Your Choice:"))
+
+if Ch==1: 
+    choice='y'
+    while choice=="y":  
+        print("%120s"%"Welcome to ASA Flight Reservation System(FRS) Customer Portal")
+        print("Please Select from the below services to procced futher")
+        print("1.Book a ticket")
+        print("2.Cancel your ticket")
+        print("3.View your ticket")
+        print("4.Exit the System")
+
+        z=int(input("Enter your Choice:"))
+        if z==1:
+            bookticket()
+            print()
+            print()
+            x=int(input("Enter your customer id:"))
+            
+            y=d
+            
+            try: 
+                cur.execute("create table if not exists seatcustid(Custid int unique,FOREIGN KEY (Custid) REFERENCES customer(customerID) ON DELETE CASCADE ON UPDATE CASCADE);") 
+                cur.execute("insert into seatcustid values({})".format(x))
+                selectseat(x,y)
+                            
+            except sql.Error as err:
+                print("Duplicate/wrong Entry Of Customer ID")
+        elif z==2:
+            cancelticket()
+        elif z==3:
+            
+            viewticket()
+        elif z==4:
+            print("Thank You For using ASA Flight Resevation System")
+            break
+        else:
+            print("Please provide Correct input from above choices")
+            choice=input("Do you want to continiue (y/n)")
+            choice=choice.lower()
+    
+    
+elif Ch==2:
+    choice='y'
+    while choice=="y":  
+        print("%120s"%"Welcome to ASA Flight Reservation System(FRS) Empolyee portal")
+        print("Please Select from the below services to procced futher")
+        print("1.View Customer Details Table")
+        print("2.Delete a Ticket From Database")
+        print("3.Exit the System")
+        inp=int(input("Enter Your Choice:"))
+        if inp==1:
+            cur.execute("Select flightno from customer;")
+            flno=cur.fetchall()
+            for i in flno:
+                im=i[0]
+                
+                cur.execute("select c.customerid,c.sno,c.name,c.name,c.phoneno,c.emailid,c.flightno,seatno from customer c,seat{} where seat{}.custid=c.customerid;".format(im,im))
+                mn=cur.fetchall()
+                for hi in mn:
+                    print("%10s"%"CustomerId","%20s"%"Sno","%20s"%"Name","%20s"%"PhoneNo","%20s"%"EmailId","%20s"%"FlightNo","%20s"%"CustID","%20s"%"SeatNo")
+                    print("%10s"%hi[0],"%20s"%hi[1],"%20s"%hi[2],"%20s"%hi[3],"%20s"%hi[4],"%20s"%hi[5],"%20s"%hi[6],"%20s"%hi[7])
+        elif inp==2:
+            j=int(input("Enter the Customer Id to be deleted:"))
+            cur.execute("select * from customer where customerid={}".format(j))
+            k=cur.fetchall()
+            print("%10s"%"CustomerID","%20s"%"Name","%20s"%"PhoneNo","%20s"%"EmailID","%20s"%"FlightNo")
+            cur.execute("Select flightno from customer;")
+            flno=cur.fetchall()
+            for i in flno:
+                im=i[0]
+                for m in k:
+                    print("%10s"%m[0],"%20s"%m[2],"%20s"%m[3],"%20s"%m[4],"%20s"%m[5])
+                n=input("Are you sure to Delete this record(y/n)")
+                if n.lower()=="y":
+                    cur.execute("delete from customer where customerid={}".format(j))
+                    cur.execute("delete from seat{} where custid={}".format(im,j))
+                    con.commit() 
+                    print("The ticket with Customer id ",j,"Is Deleted Sucessfully")
+        elif inp==3:
+            print("Thank You For using ASA Flight Resevation System")
+            break
+        else:
+            print("Please provide Correct input from above choices")
+            choice=input("Do you want to continiue (y/n)")
+            choice=choice.lower()
+        
+            
+            
+            
